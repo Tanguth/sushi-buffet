@@ -1,0 +1,27 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; }
+body { margin: 0; background: #14121a; color: #eee; -webkit-tap-highlight-color: transparent; }
+#root { max-width: 900px; margin: 0 auto; }
+.screen { padding: 16px 16px 110px; display: flex; flex-direction: column; gap: 12px;
+  padding-top: max(16px, env(safe-area-inset-top)); }
+h1, h2, h3 { margin: 4px 0; }
+input { font-size: 18px; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #221f2b; color: inherit; }
+label { display: flex; flex-direction: column; gap: 6px; }
+button { font-size: 17px; padding: 14px; border-radius: 12px; border: 1px solid #555; background: #2b2736; color: inherit; min-height: 48px; }
+button:disabled { opacity: .3; }
+button.primary { background: #6d4aff; border-color: #6d4aff; font-weight: 600; }
+button.link { background: none; border: none; text-decoration: underline; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.role { border-width: 2px; }
+.role.townsfolk { border-color: #3b82f6; }
+.role.outsider { border-color: #38bdf8; }
+.role.minion { border-color: #f97316; }
+.role.demon { border-color: #ef4444; }
+.role.selected { background: #fff3; box-shadow: 0 0 0 3px #fff; }
+.role.big { min-height: 110px; font-size: 22px; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.role small { opacity: .6; font-size: 13px; }
+.offer { display: grid; gap: 12px; }
+.hint { opacity: .6; margin: 0; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: #14121aee; max-width: 900px; margin: 0 auto; flex-direction: column; }
+.result { list-style: none; padding: 0; display: grid; gap: 8px; }
+.result li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
