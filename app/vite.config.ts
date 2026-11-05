@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: { globPatterns: ['**/*.{js,css,html,svg,webp}'] },
       manifest: {
         name: 'BotC Pick & Ban',
         short_name: 'BotC Draft',

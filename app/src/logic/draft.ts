@@ -11,7 +11,7 @@ const BASE: Record<number, [number, number, number, number]> = {
 // Variation du nombre d'Étrangers quand ce personnage est tiré (compensée par les Villageois)
 const OUTSIDER_SHIFT: Record<string, number> = {
   'TB-baron': 2,
-  'SV-fang-gu': 1,
+  'SV-fanggu': 1,
   'SV-vigormortis': -1,
 }
 
@@ -22,21 +22,22 @@ export interface Player {
 }
 
 export interface State {
-  phase: 'setup' | 'ban' | 'draft' | 'done'
+  phase: 'setup' | 'ban' | 'handback' | 'recap' | 'draft' | 'done'
   players: Player[]
   banned: string[]
   queue: number[] // ordre de réveil aléatoire (indices de joueurs)
   ready: boolean // le joueur courant a le téléphone
+  reveal: boolean // écran de rappel du rôle du joueur
   ending: boolean // écran de fin de tour du joueur
   turn: number
   offer: string[] | null
-  mulliganed: boolean
+  mulligans: number
   seen: string[] // rôles refusés par le joueur courant lors d'un mulligan
 }
 
 export const initialState: State = {
-  phase: 'setup', players: [], banned: [], queue: [], ready: false, ending: false, turn: 0,
-  offer: null, mulliganed: false, seen: [],
+  phase: 'setup', players: [], banned: [], queue: [], ready: false, reveal: false, ending: false, turn: 0,
+  offer: null, mulligans: 0, seen: [],
 }
 
 export const MIN_PLAYERS = 5
@@ -82,5 +83,7 @@ export function availablePool(s: State, exclude: string[] = []): string[] {
 export function draw(s: State, n: number, exclude: string[] = []): string[] {
   return shuffle(availablePool(s, exclude)).slice(0, n)
 }
+
+
 
 
