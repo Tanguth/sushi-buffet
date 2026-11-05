@@ -37,7 +37,7 @@ button.link { background: none; border: none; text-decoration: underline; }
 .modal.minion { border-color: #f97316; } .modal.demon { border-color: #ef4444; }
 .modal .icon { width: 96px; height: 96px; }
 .modal h2 { margin: 0; } .modal small { opacity: .6; }
-.modal .ability { font-size: 18px; line-height: 1.4; margin: 6px 0 10px; }
+.modal .ability, .screen .ability { font-size: 18px; line-height: 1.4; margin: 6px 0 10px; }
 .modal .primary { width: 100%; }
 .modal .close { position: absolute; top: 8px; right: 8px; min-height: 40px; width: 40px; padding: 0; border-radius: 50%; }
 .lead { font-size: 20px; }
