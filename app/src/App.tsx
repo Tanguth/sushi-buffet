@@ -235,7 +235,12 @@ function Draft({ s, set }: { s: State; set: SetState }) {
         button="J'ai compris"
         onNext={() => set({ ...s, reveal: false, ending: true })}
       >
-        {player.pick && <RoleButton id={player.pick} big />}
+        {player.pick && (
+          <>
+            <RoleButton id={player.pick} big />
+            <p className="ability">{ABILITIES[player.pick]}</p>
+          </>
+        )}
       </Transition>
     )
   }
