@@ -22,7 +22,7 @@ function Icon({ id }: { id: string }) {
   if (!ok) return null
   return (
     <img
-      className="icon" alt="" src={`${import.meta.env.BASE_URL}icons/${id}.png`}
+      className="icon" alt="" src={`${import.meta.env.BASE_URL}icons/${id}.webp`}
       onError={() => setOk(false)}
     />
   )
@@ -129,7 +129,7 @@ function Ban({ s, set }: { s: State; set: SetState }) {
     setSel(null)
     set(
       last
-        ? { ...s, players, banned, phase: 'draft', turn: 0, ready: false, queue: shuffle(s.players.map((_, i) => i)) }
+        ? { ...s, players, banned, phase: 'handback', turn: 0, ready: false, queue: shuffle(s.players.map((_, i) => i)) }
         : { ...s, players, banned, turn: s.turn + 1, ready: false },
     )
   }
@@ -163,6 +163,27 @@ function Ban({ s, set }: { s: State; set: SetState }) {
   )
 }
 
+function Recap({ s, set }: { s: State; set: SetState }) {
+  return (
+    <div className="screen">
+      <h2>Rôles bannis</h2>
+      <ul className="result">
+        {s.players.map((p, i) => (
+          <li key={i}>
+            <b>{p.name}</b>
+            <RoleButton id={p.ban!} />
+          </li>
+        ))}
+      </ul>
+      <div className="bar">
+        <button className="primary" onClick={() => set({ ...s, phase: 'draft' })}>
+          Commencer la draft
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function Draft({ s, set }: { s: State; set: SetState }) {
   const [sel, setSel] = useState<string | null>(null)
 
@@ -178,8 +199,21 @@ function Draft({ s, set }: { s: State; set: SetState }) {
         title={`Réveille ${player.name}`}
         text={`Draft — ${s.turn + 1}/${s.queue.length}. Donne-lui le téléphone.`}
         button={`${player.name} a le téléphone`}
-        onNext={() => set({ ...s, ready: true, offer: draw(s, 3), mulliganed: false, seen: [] })}
+        onNext={() => set({ ...s, ready: true, offer: draw(s, 3), seen: [] })}
       />
+    )
+  }
+
+  if (s.reveal) {
+    return (
+      <Transition
+        title="Ton rôle"
+        text="Retiens-le bien, il ne sera plus affiché."
+        button="J'ai compris"
+        onNext={() => set({ ...s, reveal: false, ending: true })}
+      >
+        {player.pick && <RoleButton id={player.pick} big />}
+      </Transition>
     )
   }
 
@@ -195,17 +229,19 @@ function Draft({ s, set }: { s: State; set: SetState }) {
   }
 
   const offer = s.offer ?? []
-  const pick = () => {
-    if (!sel) return
-    const players = s.players.map((p, i) => (i === idx ? { ...p, pick: sel } : p))
-    const rejected = offer.filter((id) => id !== sel)
+  const assign = (id: string, banned: string[]) => {
+    const players = s.players.map((p, i) => (i === idx ? { ...p, pick: id } : p))
     setSel(null)
-    set({ ...s, players, banned: [...s.banned, ...rejected], offer: null, seen: [], ending: true })
+    set({ ...s, players, banned: [...s.banned, ...banned], offer: null, seen: [], reveal: true })
+  }
+  const pick = () => {
+    if (sel) assign(sel, offer.filter((id) => id !== sel))
   }
   const mulligan = () => {
-    const seen = [...s.seen, ...offer]
+    const next = draw(s, offer.length - 1)
     setSel(null)
-    set({ ...s, offer: draw(s, 2, seen), mulliganed: true, seen })
+    if (next.length === 1) assign(next[0], [])
+    else set({ ...s, offer: next, mulligans: s.mulligans + 1 })
   }
   return (
     <div className="screen">
@@ -216,17 +252,18 @@ function Draft({ s, set }: { s: State; set: SetState }) {
           <RoleButton key={id} id={id} big selected={sel === id} onClick={() => setSel(id)} />
         ))}
       </div>
-      <p className="hint">Les rôles refusés sont bannis.</p>
+      <p className="hint">Les rôles refusés sont bannis. Un mulligan ne bannit rien.</p>
       <div className="bar">
         <button className="primary" disabled={!sel} onClick={pick}>Choisir</button>
-        {!s.mulliganed && (
-          <button onClick={mulligan}>Mulligan (2 choix, rien n'est banni)</button>
+        {offer.length > 1 && (
+          <button onClick={mulligan}>
+            Mulligan ({offer.length - 1 === 1 ? 'rôle imposé' : `${offer.length - 1} choix`})
+          </button>
         )}
       </div>
     </div>
   )
 }
-
 function Done({ s, set }: { s: State; set: SetState }) {
   const q = quotaFor(s.players.length, picksOf(s))
   return (
@@ -261,6 +298,16 @@ export default function App() {
       />
     )
   if (s.phase === 'ban') return <Ban s={s} set={set} />
+  if (s.phase === 'handback')
+    return (
+      <Transition
+        title="Bans terminés"
+        text="Rends le téléphone au conteur."
+        button="Voir les bans"
+        onNext={() => set({ ...s, phase: 'recap' })}
+      />
+    )
+  if (s.phase === 'recap') return <Recap s={s} set={set} />
   if (s.phase === 'draft') return <Draft s={s} set={set} />
   return <Done s={s} set={set} />
 }
