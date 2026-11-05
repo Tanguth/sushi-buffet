@@ -25,7 +25,9 @@ export interface State {
   phase: 'setup' | 'ban' | 'draft' | 'done'
   players: Player[]
   banned: string[]
-  current: number | null // joueur actuellement réveillé
+  queue: number[] // ordre de réveil aléatoire (indices de joueurs)
+  ready: boolean // le joueur courant a le téléphone
+  ending: boolean // écran de fin de tour du joueur
   turn: number
   offer: string[] | null
   mulliganed: boolean
@@ -33,7 +35,7 @@ export interface State {
 }
 
 export const initialState: State = {
-  phase: 'setup', players: [], banned: [], current: null, turn: 0,
+  phase: 'setup', players: [], banned: [], queue: [], ready: false, ending: false, turn: 0,
   offer: null, mulliganed: false, seen: [],
 }
 
@@ -80,4 +82,5 @@ export function availablePool(s: State, exclude: string[] = []): string[] {
 export function draw(s: State, n: number, exclude: string[] = []): string[] {
   return shuffle(availablePool(s, exclude)).slice(0, n)
 }
+
 

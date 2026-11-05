@@ -20,7 +20,7 @@ const c = (
   names: string[],
 ): Character[] =>
   names.map((name) => ({
-    id: `${script}-${name.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-')}`,
+    id: `${script}-${name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')}`,
     name,
     type,
     script,
@@ -49,3 +49,4 @@ export const CHARACTERS: Character[] = [
 ]
 
 export const BY_ID = new Map(CHARACTERS.map((ch) => [ch.id, ch]))
+

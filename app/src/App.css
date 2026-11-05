@@ -25,3 +25,10 @@ button.link { background: none; border: none; text-decoration: underline; }
   background: #14121aee; max-width: 900px; margin: 0 auto; flex-direction: column; }
 .result { list-style: none; padding: 0; display: grid; gap: 8px; }
 .result li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.icon { width: 48px; height: 48px; object-fit: contain; }
+.role { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.result .role { flex-direction: row; }
+.screen.center { text-align: center; justify-content: center; min-height: 80vh; }
+.lead { font-size: 20px; }
+.bans { text-align: left; } .bans ul { padding-left: 18px; }
