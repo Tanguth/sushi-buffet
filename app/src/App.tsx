@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react'
-import { BY_ID, CHARACTERS, TYPE_LABELS, type RoleType } from './data/characters'
+import { ABILITIES } from './data/abilities'
+import { BY_ID, CHARACTERS, TYPE_LABELS, TYPE_PLURALS, type RoleType } from './data/characters'
 import {
   MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, quotaFor, shuffle, type State,
 } from './logic/draft'
 import './App.css'
 
-const KEY = 'botc-draft-v2'
+const KEY = 'botc-draft-v3'
 const TYPES: RoleType[] = ['townsfolk', 'outsider', 'minion', 'demon']
 type SetState = (s: State) => void
 
 function load(): State {
   try {
-    return { ...initialState, ...JSON.parse(localStorage.getItem(KEY) ?? '') }
+    const s: State = { ...initialState, ...JSON.parse(localStorage.getItem(KEY) ?? '') }
+    const ids = [...s.banned, ...s.players.flatMap((p) => [p.ban, p.pick, ...(s.offer ?? [])])]
+    return ids.every((id) => !id || BY_ID.has(id)) ? s : initialState
   } catch {
     return initialState
   }
@@ -45,6 +48,26 @@ function RoleButton({
       {big && <small>{TYPE_LABELS[ch.type]}</small>}
       {note && <small>{note}</small>}
     </button>
+  )
+}
+
+function RoleModal({
+  id, action, onConfirm, onClose,
+}: {
+  id: string; action: string; onConfirm: () => void; onClose: () => void
+}) {
+  const ch = BY_ID.get(id)!
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className={`modal ${ch.type}`} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+        <button className="close" aria-label="Fermer" onClick={onClose}>✕</button>
+        <Icon id={id} />
+        <h2>{ch.name}</h2>
+        <small>{TYPE_LABELS[ch.type]}</small>
+        <p className="ability">{ABILITIES[id] ?? 'Capacité non disponible.'}</p>
+        <button className="primary" onClick={onConfirm}>{action}</button>
+      </div>
+    </div>
   )
 }
 
@@ -121,10 +144,9 @@ function Ban({ s, set }: { s: State; set: SetState }) {
     )
   }
 
-  const validate = () => {
-    if (!sel) return
-    const players = s.players.map((p, i) => (i === s.turn ? { ...p, ban: sel } : p))
-    const banned = [...s.banned, sel]
+  const validate = (id: string) => {
+    const players = s.players.map((p, i) => (i === s.turn ? { ...p, ban: id } : p))
+    const banned = [...s.banned, id]
     const last = s.turn + 1 >= s.players.length
     setSel(null)
     set(
@@ -138,13 +160,13 @@ function Ban({ s, set }: { s: State; set: SetState }) {
       <h2>{player.name}, bannis un rôle</h2>
       {TYPES.map((t) => (
         <section key={t}>
-          <h3>{TYPE_LABELS[t]}s</h3>
+          <h3>{TYPE_PLURALS[t]}</h3>
           <div className="grid">
             {CHARACTERS.filter((c) => c.type === t).map((c) => {
               const by = s.players.find((p) => p.ban === c.id)
               return (
                 <RoleButton
-                  key={c.id} id={c.id} selected={sel === c.id}
+                  key={c.id} id={c.id}
                   disabled={s.banned.includes(c.id)}
                   note={by ? `banni par ${by.name}` : undefined}
                   onClick={() => setSel(c.id)}
@@ -154,11 +176,12 @@ function Ban({ s, set }: { s: State; set: SetState }) {
           </div>
         </section>
       ))}
-      <div className="bar">
-        <button className="primary" disabled={!sel} onClick={validate}>
-          Bannir {sel ? BY_ID.get(sel)!.name : '…'}
-        </button>
-      </div>
+      {sel && (
+        <RoleModal
+          id={sel} action={`Bannir ${BY_ID.get(sel)!.name}`}
+          onConfirm={() => validate(sel)} onClose={() => setSel(null)}
+        />
+      )}
     </div>
   )
 }
@@ -249,18 +272,23 @@ function Draft({ s, set }: { s: State; set: SetState }) {
       {offer.length === 0 && <p>Plus aucun rôle disponible.</p>}
       <div className="offer">
         {offer.map((id) => (
-          <RoleButton key={id} id={id} big selected={sel === id} onClick={() => setSel(id)} />
+          <RoleButton key={id} id={id} big onClick={() => setSel(id)} />
         ))}
       </div>
+      {sel && (
+        <RoleModal
+          id={sel} action={`Choisir ${BY_ID.get(sel)!.name}`}
+          onConfirm={pick} onClose={() => setSel(null)}
+        />
+      )}
       <p className="hint">Les rôles refusés sont bannis. Un mulligan ne bannit rien.</p>
-      <div className="bar">
-        <button className="primary" disabled={!sel} onClick={pick}>Choisir</button>
-        {offer.length > 1 && (
+      {offer.length > 1 && (
+        <div className="bar">
           <button onClick={mulligan}>
             Mulligan ({offer.length - 1 === 1 ? 'rôle imposé' : `${offer.length - 1} choix`})
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -278,7 +306,7 @@ function Done({ s, set }: { s: State; set: SetState }) {
         ))}
       </ul>
       <p className="hint">
-        Cible : {TYPES.map((t) => `${q[t]} ${TYPE_LABELS[t]}`).join(' / ')}
+        Cible : {TYPES.map((t) => `${q[t]} ${TYPE_PLURALS[t]}`).join(' / ')}
       </p>
       <button className="primary" onClick={() => set(initialState)}>Nouvelle partie</button>
     </div>
