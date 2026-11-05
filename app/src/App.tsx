@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { BY_ID, CHARACTERS, TYPE_LABELS, type RoleType } from './data/characters'
 import {
-  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, quotaFor, picksOf, type State,
+  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, quotaFor, shuffle, type State,
 } from './logic/draft'
 import './App.css'
 
-const KEY = 'botc-draft-v1'
+const KEY = 'botc-draft-v2'
 const TYPES: RoleType[] = ['townsfolk', 'outsider', 'minion', 'demon']
+type SetState = (s: State) => void
 
 function load(): State {
   try {
@@ -16,10 +17,21 @@ function load(): State {
   }
 }
 
+function Icon({ id }: { id: string }) {
+  const [ok, setOk] = useState(true)
+  if (!ok) return null
+  return (
+    <img
+      className="icon" alt="" src={`${import.meta.env.BASE_URL}icons/${id}.png`}
+      onError={() => setOk(false)}
+    />
+  )
+}
+
 function RoleButton({
-  id, onClick, disabled, selected, big,
+  id, onClick, disabled, selected, big, note,
 }: {
-  id: string; onClick?: () => void; disabled?: boolean; selected?: boolean; big?: boolean
+  id: string; onClick?: () => void; disabled?: boolean; selected?: boolean; big?: boolean; note?: string
 }) {
   const ch = BY_ID.get(id)!
   return (
@@ -28,9 +40,28 @@ function RoleButton({
       disabled={disabled}
       onClick={onClick}
     >
-      {ch.name}
+      <Icon id={id} />
+      <span>{ch.name}</span>
       {big && <small>{TYPE_LABELS[ch.type]}</small>}
+      {note && <small>{note}</small>}
     </button>
+  )
+}
+
+function Transition({
+  title, text, button, onNext, children,
+}: {
+  title: string; text?: string; button: string; onNext: () => void; children?: React.ReactNode
+}) {
+  return (
+    <div className="screen center">
+      <h1>{title}</h1>
+      {text && <p className="lead">{text}</p>}
+      {children}
+      <div className="bar">
+        <button className="primary" onClick={onNext}>{button}</button>
+      </div>
+    </div>
   )
 }
 
@@ -64,31 +95,62 @@ function Setup({ onStart }: { onStart: (names: string[]) => void }) {
   )
 }
 
-function Ban({ s, set }: { s: State; set: (s: State) => void }) {
+function Ban({ s, set }: { s: State; set: SetState }) {
   const [sel, setSel] = useState<string | null>(null)
   const player = s.players[s.turn]
+
+  if (!s.ready) {
+    return (
+      <Transition
+        title={`Passe le téléphone à ${player.name}`}
+        text={`Phase de ban — ${s.turn + 1}/${s.players.length}`}
+        button="J'ai le téléphone"
+        onNext={() => set({ ...s, ready: true })}
+      >
+        {s.turn > 0 && (
+          <div className="bans">
+            <h3>Rôles bannis</h3>
+            <ul>
+              {s.players.slice(0, s.turn).map((p, i) => (
+                <li key={i}><b>{p.name}</b> → {BY_ID.get(p.ban!)!.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Transition>
+    )
+  }
+
   const validate = () => {
     if (!sel) return
     const players = s.players.map((p, i) => (i === s.turn ? { ...p, ban: sel } : p))
     const banned = [...s.banned, sel]
     const last = s.turn + 1 >= s.players.length
-    set({ ...s, players, banned, turn: s.turn + 1, phase: last ? 'draft' : 'ban' })
     setSel(null)
+    set(
+      last
+        ? { ...s, players, banned, phase: 'draft', turn: 0, ready: false, queue: shuffle(s.players.map((_, i) => i)) }
+        : { ...s, players, banned, turn: s.turn + 1, ready: false },
+    )
   }
   return (
     <div className="screen">
-      <h2>Ban — {player.name} ({s.turn + 1}/{s.players.length})</h2>
+      <h2>{player.name}, bannis un rôle</h2>
       {TYPES.map((t) => (
         <section key={t}>
           <h3>{TYPE_LABELS[t]}s</h3>
           <div className="grid">
-            {CHARACTERS.filter((c) => c.type === t).map((c) => (
-              <RoleButton
-                key={c.id} id={c.id} selected={sel === c.id}
-                disabled={s.banned.includes(c.id)}
-                onClick={() => setSel(c.id)}
-              />
-            ))}
+            {CHARACTERS.filter((c) => c.type === t).map((c) => {
+              const by = s.players.find((p) => p.ban === c.id)
+              return (
+                <RoleButton
+                  key={c.id} id={c.id} selected={sel === c.id}
+                  disabled={s.banned.includes(c.id)}
+                  note={by ? `banni par ${by.name}` : undefined}
+                  onClick={() => setSel(c.id)}
+                />
+              )
+            })}
           </div>
         </section>
       ))}
@@ -101,50 +163,53 @@ function Ban({ s, set }: { s: State; set: (s: State) => void }) {
   )
 }
 
-function Draft({ s, set }: { s: State; set: (s: State) => void }) {
+function Draft({ s, set }: { s: State; set: SetState }) {
   const [sel, setSel] = useState<string | null>(null)
-  const waiting = s.players.map((p, i) => ({ p, i })).filter(({ p }) => !p.pick)
 
-  if (waiting.length === 0) {
+  if (s.turn >= s.queue.length) {
     return <Done s={s} set={set} />
   }
+  const idx = s.queue[s.turn]
+  const player = s.players[idx]
 
-  if (s.current === null) {
+  if (!s.ready) {
     return (
-      <div className="screen">
-        <h2>Draft — qui est réveillé ?</h2>
-        <p>{waiting.length} joueur(s) restant(s). Choisis le joueur que tu réveilles.</p>
-        <div className="grid">
-          {waiting.map(({ p, i }) => (
-            <button
-              key={i} className="role"
-              onClick={() => set({ ...s, current: i, offer: draw(s, 3), mulliganed: false, seen: [] })}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
-        <button className="link" onClick={() => set({ ...s, phase: 'done' })}>Terminer</button>
-      </div>
+      <Transition
+        title={`Réveille ${player.name}`}
+        text={`Draft — ${s.turn + 1}/${s.queue.length}. Donne-lui le téléphone.`}
+        button={`${player.name} a le téléphone`}
+        onNext={() => set({ ...s, ready: true, offer: draw(s, 3), mulliganed: false, seen: [] })}
+      />
+    )
+  }
+
+  if (s.ending) {
+    return (
+      <Transition
+        title="Tirage terminé"
+        text="Rends le téléphone au conteur."
+        button="Continuer"
+        onNext={() => set({ ...s, turn: s.turn + 1, ready: false, ending: false })}
+      />
     )
   }
 
   const offer = s.offer ?? []
   const pick = () => {
     if (!sel) return
-    const players = s.players.map((p, i) => (i === s.current ? { ...p, pick: sel } : p))
+    const players = s.players.map((p, i) => (i === idx ? { ...p, pick: sel } : p))
     const rejected = offer.filter((id) => id !== sel)
-    set({ ...s, players, banned: [...s.banned, ...rejected], current: null, offer: null, seen: [] })
     setSel(null)
+    set({ ...s, players, banned: [...s.banned, ...rejected], offer: null, seen: [], ending: true })
   }
   const mulligan = () => {
     const seen = [...s.seen, ...offer]
-    set({ ...s, offer: draw(s, 2, seen), mulliganed: true, seen })
     setSel(null)
+    set({ ...s, offer: draw(s, 2, seen), mulliganed: true, seen })
   }
   return (
     <div className="screen">
-      <h2>{s.players[s.current].name}, choisis ton rôle</h2>
+      <h2>Choisis ton rôle</h2>
       {offer.length === 0 && <p>Plus aucun rôle disponible.</p>}
       <div className="offer">
         {offer.map((id) => (
@@ -162,12 +227,11 @@ function Draft({ s, set }: { s: State; set: (s: State) => void }) {
   )
 }
 
-function Done({ s, set }: { s: State; set: (s: State) => void }) {
-  const picks = picksOf(s)
-  const q = quotaFor(s.players.length, picks)
+function Done({ s, set }: { s: State; set: SetState }) {
+  const q = quotaFor(s.players.length, picksOf(s))
   return (
     <div className="screen">
-      <h2>Résultat</h2>
+      <h2>Résultat (conteur)</h2>
       <ul className="result">
         {s.players.map((p, i) => (
           <li key={i}>
