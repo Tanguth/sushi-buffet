@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ABILITIES } from './data/abilities'
 import { BY_ID, CHARACTERS, TYPE_LABELS, TYPE_PLURALS, type RoleType } from './data/characters'
 import {
-  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, rollModes, shuffle, type State,
+  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, quotaFor, shuffle, type State,
 } from './logic/draft'
 import './App.css'
 
@@ -151,10 +151,7 @@ function Ban({ s, set }: { s: State; set: SetState }) {
     setSel(null)
     set(
       last
-        ? {
-            ...s, players, banned, phase: 'handback', turn: 0, ready: false,
-            queue: shuffle(s.players.map((_, i) => i)), modes: rollModes(banned),
-          }
+        ? { ...s, players, banned, phase: 'handback', turn: 0, ready: false, queue: shuffle(s.players.map((_, i) => i)) }
         : { ...s, players, banned, turn: s.turn + 1, ready: false },
     )
   }
@@ -189,32 +186,43 @@ function Ban({ s, set }: { s: State; set: SetState }) {
   )
 }
 
-function Modes({ modes }: { modes: string[] }) {
-  return (
-    <>
-      {modes.map((id) => (
-        <p key={id} className={`mode ${BY_ID.get(id)!.type}`}>
-          <Icon id={id} />
-          <span>C'est une partie {BY_ID.get(id)!.name}</span>
-        </p>
-      ))}
-    </>
-  )
-}
-
 function Recap({ s, set }: { s: State; set: SetState }) {
+  const bans = s.players.flatMap((player, index) =>
+    player.ban ? [{ player, index, character: BY_ID.get(player.ban)! }] : [],
+  )
+
   return (
     <div className="screen">
-      <h2>Rôles bannis</h2>
-      <ul className="result">
-        {s.players.map((p, i) => (
-          <li key={i}>
-            <b>{p.name}</b>
-            <RoleButton id={p.ban!} />
-          </li>
-        ))}
-      </ul>
-      <Modes modes={s.modes} />
+      <div>
+        <h2>Récapitulatif des bans</h2>
+        <p className="hint">
+          {bans.length} rôle{bans.length === 1 ? '' : 's'} écarté{bans.length === 1 ? '' : 's'} par les joueurs
+        </p>
+      </div>
+      <div className="ban-groups">
+        {TYPES.map((type) => {
+          const group = bans.filter(({ character }) => character.type === type)
+          if (group.length === 0) return null
+
+          return (
+            <section className="ban-group" key={type}>
+              <h3>
+                {TYPE_PLURALS[type]}
+                <span className="ban-count">{group.length}</span>
+              </h3>
+              <ul className="ban-grid">
+                {group.map(({ player, index, character }) => (
+                  <li className={`ban-card ${type}`} key={index}>
+                    <Icon id={character.id} />
+                    <strong>{character.name}</strong>
+                    <span className="ban-player">Par {player.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
+      </div>
       <div className="bar">
         <button className="primary" onClick={() => set({ ...s, phase: 'draft' })}>
           Commencer la draft
@@ -315,7 +323,7 @@ function Draft({ s, set }: { s: State; set: SetState }) {
   )
 }
 function Done({ s, set }: { s: State; set: SetState }) {
-  const count = (t: RoleType) => picksOf(s).filter((id) => BY_ID.get(id)!.type === t).length
+  const q = quotaFor(s.players.length, picksOf(s))
   return (
     <div className="screen">
       <h2>Résultat (conteur)</h2>
@@ -327,9 +335,8 @@ function Done({ s, set }: { s: State; set: SetState }) {
           </li>
         ))}
       </ul>
-      <Modes modes={s.modes} />
       <p className="hint">
-        Composition : {TYPES.map((t) => `${count(t)} ${TYPE_PLURALS[t]}`).join(' / ')}
+        Cible : {TYPES.map((t) => `${q[t]} ${TYPE_PLURALS[t]}`).join(' / ')}
       </p>
       <button className="primary" onClick={() => set(initialState)}>Nouvelle partie</button>
     </div>

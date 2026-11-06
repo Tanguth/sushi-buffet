@@ -51,9 +51,9 @@ export const CHARACTERS: Character[] = [
   ...c('SV', 'demon', ['Fang Gu|fanggu', 'Vigormortis|vigormortis', 'No Dashii|nodashii', 'Vortox|vortox']),
   // Carousel
   ...c('CAR', 'townsfolk', ['Acrobate|acrobat', 'Alchimiste|alchemist', 'Al-Saahir|alsaahir', 'Amnésique|amnesiac', 'Athée|atheist', 'Aéronaute|balloonist', 'Banshee|banshee', 'Chasseur de primes|bountyhunter', 'Cannibale|cannibal', 'Choriste|choirboy', 'Chef de secte|cultleader', 'Ingénieur|engineer', 'Fermier|farmer', 'Pêcheur|fisherman', 'Général|general', 'Grande prêtresse|highpriestess', 'Chasseur|huntsman', 'Roi|king', 'Chevalier|knight', 'Lycanthrope|lycanthrope', 'Magicien|magician', 'Veilleur de nuit|nightwatchman', 'Noble|noble', 'Pixie|pixie', 'Planteur de pavot|poppygrower', 'Prédicateur|preacher', 'Princesse|princess', 'Shugenja|shugenja', 'Intendante|steward', 'Idiot du village|villageidiot']),
-  ...c('CAR', 'outsider', ['Damoiselle|damsel', 'Golem|golem', 'Chapelier|hatter', 'Hérétique|heretic', 'Ogre|ogre', 'Médecin de peste|plaguedoctor', 'Politicien|politician', 'Maître des puzzles|puzzlemaster', 'Balance|snitch', 'Zélote|zealot']),
+  ...c('CAR', 'outsider', ['Damoiselle|damsel', 'Golem|golem', 'Chapelier|hatter', 'Hérétique|heretic', 'Ermite|hermit', 'Ogre|ogre', 'Médecin de peste|plaguedoctor', 'Politicien|politician', 'Maître des puzzles|puzzlemaster', 'Balance|snitch', 'Zélote|zealot']),
   ...c('CAR', 'minion', ['Laborantin|boffin', 'Boumdandy|boomdandy', 'Tourmenteur|fearmonger', 'Gobelin|goblin', 'Harpie|harpy', 'Marionnette|marionette', 'Mézéphélès|mezepheles', 'Organiste de rue|organgrinder', 'Psychopathe|psychopath', 'Invocatrice|summoner', 'Vizir|vizier', 'Mage|wizard', 'Spectre|wraith', 'Xaan|xaan', 'Veuve|widow']),
-  ...c('CAR', 'demon', ['Al-Hadikhia|alhadikhia', 'Kazali|kazali', 'Léviathan|leviathan', 'Timonstre|lilmonsta', 'Sansgue|lleech', 'Ojo|ojo', 'Emeutier|riot', 'Yaggablabla|yaggababble']),
+  ...c('CAR', 'demon', ['Al-Hadikhia|alhadikhia', 'Kazali|kazali', 'Legion|legion', 'Léviathan|leviathan', 'Timonstre|lilmonsta', 'Sansgue|lleech', 'Seigneur de Typhon|lordoftyphon', 'Ojo|ojo', 'Emeutier|riot', 'Yaggablabla|yaggababble']),
 ]
 
 export const BY_ID = new Map(CHARACTERS.map((ch) => [ch.id, ch]))
