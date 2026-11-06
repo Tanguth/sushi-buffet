@@ -328,6 +328,19 @@ function Done({ s, set }: { s: State; set: SetState }) {
   const q = quotaFor(s.players.length, picks)
   const jinxes = jinxesFor(picks)
 
+  const downloadJson = () => {
+    const script = [
+      { id: '_meta', name: 'Partie Sushi Buffet', author: 'Sushi Buffet' },
+      ...picks.map((id) => ({ id: id.slice(id.indexOf('-') + 1) })),
+    ]
+    const url = URL.createObjectURL(new Blob([JSON.stringify(script)], { type: 'application/json' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'partie.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="screen">
       <h2>Résultat (conteur)</h2>
@@ -361,6 +374,7 @@ function Done({ s, set }: { s: State; set: SetState }) {
       <p className="hint">
         Cible : {TYPES.map((t) => `${q[t]} ${TYPE_PLURALS[t]}`).join(' / ')}
       </p>
+      <button onClick={downloadJson}>Télécharger JSON</button>
       <button className="primary" onClick={() => set(initialState)}>Nouvelle partie</button>
     </div>
   )
