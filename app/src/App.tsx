@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ABILITIES } from './data/abilities'
 import { BY_ID, CHARACTERS, TYPE_LABELS, TYPE_PLURALS, type RoleType } from './data/characters'
+import { jinxesFor } from './data/jinxes'
 import {
   MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, quotaFor, shuffle, type State,
 } from './logic/draft'
@@ -323,7 +324,10 @@ function Draft({ s, set }: { s: State; set: SetState }) {
   )
 }
 function Done({ s, set }: { s: State; set: SetState }) {
-  const q = quotaFor(s.players.length, picksOf(s))
+  const picks = picksOf(s)
+  const q = quotaFor(s.players.length, picks)
+  const jinxes = jinxesFor(picks)
+
   return (
     <div className="screen">
       <h2>Résultat (conteur)</h2>
@@ -335,6 +339,25 @@ function Done({ s, set }: { s: State; set: SetState }) {
           </li>
         ))}
       </ul>
+      <section className="jinx-section">
+        <h3>Jinxs de la partie</h3>
+        {jinxes.length === 0 ? (
+          <p className="hint">Aucun jinx détecté pour cette composition.</p>
+        ) : (
+          <ul className="jinx-list">
+            {jinxes.map(({ first, second, reason }) => (
+              <li className="jinx-card" key={`${first.id}-${second.id}`}>
+                <div className="jinx-pair">
+                  <span className="jinx-role"><Icon id={first.id} />{first.name}</span>
+                  <span aria-hidden="true">↔</span>
+                  <span className="jinx-role"><Icon id={second.id} />{second.name}</span>
+                </div>
+                <p className="jinx-reason">{reason}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <p className="hint">
         Cible : {TYPES.map((t) => `${q[t]} ${TYPE_PLURALS[t]}`).join(' / ')}
       </p>
