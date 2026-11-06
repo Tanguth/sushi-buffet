@@ -54,6 +54,9 @@ button.link { background: none; border: none; text-decoration: underline; }
 .ban-card.demon { border-left-color: #ef4444; }
 .ban-card strong { min-width: 0; }
 .ban-player { margin-left: auto; font-size: 13px; opacity: .65; text-align: right; }
+.mode { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; padding: 10px; border: 2px solid #555; border-radius: 12px; font-size: 20px; font-weight: 600; }
+.mode.townsfolk { border-color: #3b82f6; } .mode.outsider { border-color: #38bdf8; }
+.mode.minion { border-color: #f97316; } .mode.demon { border-color: #ef4444; }
 .credits { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; opacity: .85; }
 .credits img { width: 120px; height: auto; }
 .jinx-section { display: grid; gap: 8px; }
