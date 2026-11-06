@@ -71,11 +71,16 @@ export function availablePool(s: State, exclude: string[] = []): string[] {
   const quota = quotaFor(s.players.length, picks)
   const count: Quota = { townsfolk: 0, outsider: 0, minion: 0, demon: 0 }
   picks.forEach((id) => count[BY_ID.get(id)!.type]++)
+  const atheistInPlay = picks.includes('CAR-atheist')
+  const evilInPlay = count.minion > 0 || count.demon > 0
+
   return CHARACTERS.filter(
     (ch) =>
       !s.banned.includes(ch.id) &&
       !picks.includes(ch.id) &&
       !exclude.includes(ch.id) &&
+      !(ch.id === 'CAR-atheist' && evilInPlay) &&
+      !(atheistInPlay && (ch.type === 'minion' || ch.type === 'demon')) &&
       count[ch.type] < quota[ch.type],
   ).map((ch) => ch.id)
 }
@@ -83,7 +88,6 @@ export function availablePool(s: State, exclude: string[] = []): string[] {
 export function draw(s: State, n: number, exclude: string[] = []): string[] {
   return shuffle(availablePool(s, exclude)).slice(0, n)
 }
-
 
 
 
