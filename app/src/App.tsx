@@ -3,7 +3,7 @@ import { ABILITIES } from './data/abilities'
 import { BY_ID, CHARACTERS, TYPE_LABELS, TYPE_PLURALS, type RoleType } from './data/characters'
 import { jinxesFor } from './data/jinxes'
 import {
-  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, quotaFor, shuffle, type State,
+  MAX_PLAYERS, MIN_PLAYERS, draw, initialState, picksOf, rollModes, shuffle, type State,
 } from './logic/draft'
 import './App.css'
 
@@ -159,7 +159,10 @@ function Ban({ s, set }: { s: State; set: SetState }) {
     setSel(null)
     set(
       last
-        ? { ...s, players, banned, phase: 'handback', turn: 0, ready: false, queue: shuffle(s.players.map((_, i) => i)) }
+        ? {
+            ...s, players, banned, phase: 'handback', turn: 0, ready: false,
+            queue: shuffle(s.players.map((_, i) => i)), modes: rollModes(banned),
+          }
         : { ...s, players, banned, turn: s.turn + 1, ready: false },
     )
   }
@@ -191,6 +194,19 @@ function Ban({ s, set }: { s: State; set: SetState }) {
         />
       )}
     </div>
+  )
+}
+
+function Modes({ modes }: { modes: string[] }) {
+  return (
+    <>
+      {modes.map((id) => (
+        <p key={id} className={`mode ${BY_ID.get(id)!.type}`}>
+          <Icon id={id} />
+          <span>C'est une partie {BY_ID.get(id)!.name}</span>
+        </p>
+      ))}
+    </>
   )
 }
 
@@ -231,6 +247,7 @@ function Recap({ s, set }: { s: State; set: SetState }) {
           )
         })}
       </div>
+      <Modes modes={s.modes} />
       <div className="bar">
         <button className="primary" onClick={() => set({ ...s, phase: 'draft' })}>
           Commencer la draft
@@ -332,13 +349,14 @@ function Draft({ s, set }: { s: State; set: SetState }) {
 }
 function Done({ s, set }: { s: State; set: SetState }) {
   const picks = picksOf(s)
-  const q = quotaFor(s.players.length, picks)
-  const jinxes = jinxesFor(picks)
+  const count = (t: RoleType) => picks.filter((id) => BY_ID.get(id)!.type === t).length
+  const roles = [...picks, ...s.modes]
+  const jinxes = jinxesFor(roles)
 
   const downloadJson = () => {
     const script = [
       { id: '_meta', name: 'Partie Sushi Buffet', author: 'Sushi Buffet' },
-      ...picks.map((id) => ({ id: id.slice(id.indexOf('-') + 1) })),
+      ...roles.map((id) => ({ id: id.slice(id.indexOf('-') + 1) })),
     ]
     const url = URL.createObjectURL(new Blob([JSON.stringify(script)], { type: 'application/json' }))
     const a = document.createElement('a')
@@ -359,6 +377,7 @@ function Done({ s, set }: { s: State; set: SetState }) {
           </li>
         ))}
       </ul>
+      <Modes modes={s.modes} />
       <section className="jinx-section">
         <h3>Jinxs de la partie</h3>
         {jinxes.length === 0 ? (
@@ -379,7 +398,7 @@ function Done({ s, set }: { s: State; set: SetState }) {
         )}
       </section>
       <p className="hint">
-        Cible : {TYPES.map((t) => `${q[t]} ${TYPE_PLURALS[t]}`).join(' / ')}
+        Composition : {TYPES.map((t) => `${count(t)} ${TYPE_PLURALS[t]}`).join(' / ')}
       </p>
       <button onClick={downloadJson}>Télécharger JSON</button>
       <button className="primary" onClick={() => set(initialState)}>Nouvelle partie</button>
