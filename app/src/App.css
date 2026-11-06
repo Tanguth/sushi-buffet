@@ -42,3 +42,6 @@ button.link { background: none; border: none; text-decoration: underline; }
 .modal .close { position: absolute; top: 8px; right: 8px; min-height: 40px; width: 40px; padding: 0; border-radius: 50%; }
 .lead { font-size: 20px; }
 .bans { text-align: left; } .bans ul { padding-left: 18px; }
+.mode { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; padding: 10px; border: 2px solid #555; border-radius: 12px; font-size: 20px; font-weight: 600; }
+.mode.townsfolk { border-color: #3b82f6; } .mode.outsider { border-color: #38bdf8; }
+.mode.minion { border-color: #f97316; } .mode.demon { border-color: #ef4444; }
