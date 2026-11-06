@@ -380,7 +380,28 @@ function Done({ s, set }: { s: State; set: SetState }) {
   )
 }
 
+function Footer() {
+  return (
+    <footer className="credits">
+      <img
+        src={`${import.meta.env.BASE_URL}ccc-parchment.png`}
+        alt="Made by the community – Blood on the Clocktower"
+      />
+      <span>By Tanguth</span>
+    </footer>
+  )
+}
+
 export default function App() {
+  return (
+    <>
+      <Game />
+      <Footer />
+    </>
+  )
+}
+
+function Game() {
   const [s, set] = useState<State>(load)
   useEffect(() => localStorage.setItem(KEY, JSON.stringify(s)), [s])
 
